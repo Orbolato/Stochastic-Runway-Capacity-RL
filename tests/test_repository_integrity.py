@@ -57,6 +57,21 @@ def normalize_day(value: str):
     return y, m, d
 
 
+def load_processed_day_counts():
+    path = ROOT / "data" / "data.csv"
+    day_counts = {}
+    rows = 0
+    with path.open(newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        if "day" not in (reader.fieldnames or []):
+            raise AssertionError("data/data.csv has no 'day' column")
+        for row in reader:
+            rows += 1
+            day = normalize_day(row["day"])
+            day_counts[day] = day_counts.get(day, 0) + 1
+    return rows, day_counts
+
+
 class RepositoryIntegrityTests(unittest.TestCase):
     def test_immutable_artifact_blob_ids(self):
         for rel, expected in EXPECTED_BLOBS.items():
@@ -64,21 +79,20 @@ class RepositoryIntegrityTests(unittest.TestCase):
             self.assertTrue(path.is_file(), rel)
             self.assertEqual(git_blob_sha(path), expected, rel)
 
-    def test_processed_dataset_shape_and_operational_days(self):
-        path = ROOT / "data" / "data.csv"
-        day_counts = {}
-        rows = 0
-        with path.open(newline="", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f)
-            self.assertIn("day", reader.fieldnames)
-            for row in reader:
-                rows += 1
-                day = normalize_day(row["day"])
-                day_counts[day] = day_counts.get(day, 0) + 1
-
+    def test_processed_dataset_total_rows(self):
+        rows, _ = load_processed_day_counts()
         self.assertEqual(rows, 66816)
+
+    def test_processed_dataset_operational_day_count(self):
+        _, day_counts = load_processed_day_counts()
         self.assertEqual(len(day_counts), 696)
+
+    def test_processed_dataset_has_96_periods_per_day(self):
+        _, day_counts = load_processed_day_counts()
         self.assertEqual(set(day_counts.values()), {96})
+
+    def test_processed_dataset_april_exclusions(self):
+        _, day_counts = load_processed_day_counts()
         for d in range(24, 29):
             self.assertNotIn((2023, 4, d), day_counts)
 
