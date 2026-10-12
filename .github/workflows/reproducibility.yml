@@ -1,0 +1,81 @@
+name: reproducibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integrity-and-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-ci.txt
+
+      - name: Compile Python sources
+        run: |
+          python -m compileall -q dqn ppo_data_based ppo_forecast_based results tests
+
+      - name: Verify immutable artifact bytes
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_immutable_artifact_blob_ids -v
+
+      - name: Verify processed dataset row count
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_total_rows -v
+
+      - name: Verify processed operational-day count
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_operational_day_count -v
+
+      - name: Verify 96 periods per processed operational day
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_has_96_periods_per_day -v
+
+      - name: Verify archived April data and preprocessing provenance
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_archived_processed_dataset_contains_april_24_to_28 -v
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_current_preprocessing_script_contains_april_exclusion -v
+
+      - name: Verify archived result tables
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_archived_result_tables -v
+
+      - name: Verify retained PPO archives
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_trained_model_archives_are_valid_zip_files -v
+
+      - name: Verify restricted source records are absent
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_restricted_source_records_are_not_committed -v
+
+      - name: Verify citation metadata
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_citation_metadata_points_to_article_and_repository -v
+
+      - name: Regenerate published result figures from archived returns
+        env:
+          MPLBACKEND: Agg
+        run: |
+          TMPDIR="$(mktemp -d)"
+          cp results/returns_209_test_days.csv "$TMPDIR/"
+          cp results/returns_7_test_days.csv "$TMPDIR/"
+          cp results/make_result_figures.py "$TMPDIR/"
+          python "$TMPDIR/make_result_figures.py"
+          test "$(find "$TMPDIR/figures" -maxdepth 1 -type f | wc -l)" -eq 28
+          test -f "$TMPDIR/figures/fig13a_db1_209_days.png"
+          test -f "$TMPDIR/figures/fig19b_fb2_no_baseline.eps"

@@ -1,13 +1,26 @@
 cff-version: 1.2.0
-message: "If you use this code or data, please cite the paper below."
-title: "A stochastic model-free reinforcement learning framework for optimizing runway capacity management under uncertainty"
+message: "If you use this repository, please cite the published article below."
+title: "Code, processed data, and archived results for: A stochastic model-free reinforcement learning framework for optimizing runway capacity management under uncertainty"
+type: software
 authors:
   - family-names: Carvalho
     given-names: Lucas Orbolato
     affiliation: Aeronautics Institute of Technology (ITA)
+    orcid: "https://orcid.org/0000-0002-8402-5832"
   - family-names: Murça
     given-names: Mayara Condé Rocha
     affiliation: Aeronautics Institute of Technology (ITA)
+repository-code: "https://github.com/Orbolato/Stochastic-Runway-Capacity-RL"
+url: "https://orbolato.github.io/publications/runway-capacity-reinforcement-learning/"
+date-released: 2026-10-12
+keywords:
+  - reinforcement learning
+  - air traffic flow management
+  - runway capacity
+  - Maskable PPO
+  - DQN
+  - uncertainty
+  - SBGR
 preferred-citation:
   type: article
   title: "A stochastic model-free reinforcement learning framework for optimizing runway capacity management under uncertainty"
@@ -20,4 +33,4 @@ preferred-citation:
   volume: 200
   start: 104620
   year: 2025
-  doi: 10.1016/j.tra.2025.104620
+  doi: "10.1016/j.tra.2025.104620"

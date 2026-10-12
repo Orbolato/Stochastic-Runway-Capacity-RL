@@ -1,0 +1,6 @@
+# Lightweight environment used by repository integrity and figure-regeneration CI.
+# Full experiment dependencies remain pinned in requirements.txt.
+numpy==1.26.4
+pandas==2.2.2
+matplotlib==3.9.2
+PyYAML==6.0.2
