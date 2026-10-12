@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Spyder / R workspaces
+*.spydata
+.spyproject/
+.Rhistory
+.RData
+.Rproj.user/
+
+# Outputs written by the experiment scripts (trained models, figures)
+**/Results - */*
+!**/Results - */.gitkeep
+ppo_data_based/*.eps
+ppo_forecast_based/*.eps
+dqn/*.eps
+dqn/*.png
+logs/
+
+# Large intermediate files produced by the R preprocessing
+data/taf_workspace.RData
+data/sbgr_data.RData
+data/taf_list_orig.csv
+data/vfr_data.csv
+data/ifr_data.csv
+data/lifr_data.csv
+images/
+
+# Raw traffic data (not distributed, see data/README.md)
+data/raw-data/traffic-data/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the paper below."
+title: "A stochastic model-free reinforcement learning framework for optimizing runway capacity management under uncertainty"
+authors:
+  - family-names: Carvalho
+    given-names: Lucas Orbolato
+    affiliation: Aeronautics Institute of Technology (ITA)
+  - family-names: Murça
+    given-names: Mayara Condé Rocha
+    affiliation: Aeronautics Institute of Technology (ITA)
+preferred-citation:
+  type: article
+  title: "A stochastic model-free reinforcement learning framework for optimizing runway capacity management under uncertainty"
+  authors:
+    - family-names: Carvalho
+      given-names: Lucas Orbolato
+    - family-names: Murça
+      given-names: Mayara Condé Rocha
+  journal: "Transportation Research Part A: Policy and Practice"
+  volume: 200
+  start: 104620
+  year: 2025
+  doi: 10.1016/j.tra.2025.104620
