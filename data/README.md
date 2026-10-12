@@ -16,16 +16,31 @@ this repository does **not** imply permission to redistribute the excluded
 underlying source records listed below.
 
 See [`../PROVENANCE.md`](../PROVENANCE.md) for the release boundary, immutable
-artifact identifiers, and the documented historical-output note.
+artifact identifiers, and the documented historical preprocessing note.
+
+## Historical preprocessing note
+
+The committed `data.csv` is an archived study input and is treated as authoritative
+for rerunning the Python experiments in this repository. An integrity audit found
+that it contains operational days **2023-04-24 through 2023-04-28**, each with 96
+periods. The current committed `R_Codes/generate_sbgr_data.R`, however, explicitly
+excludes those five operational days.
+
+The available repository history does not establish when or why that exclusion was
+introduced relative to the archived processed dataset. For that reason, this
+repository does **not** claim that rerunning the current raw-to-processed R pipeline
+will recreate the committed `data.csv` or `data_gru.Rda` byte-for-byte. The
+historical source code and the archived processed study inputs are both preserved
+without silently modifying either one. See [`../PROVENANCE.md`](../PROVENANCE.md).
 
 ## Files
 
-| File | Produced by | Used by | Description |
+| File | Produced by / provenance | Used by | Description |
 |---|---|---|---|
-| `data.csv` | `R_Codes/capacity_management.R` | all Python experiments | Traffic and METAR features per 15-min period (main dataset) |
+| `data.csv` | Archived processed study artifact; preprocessing methodology in `R_Codes/` | all Python experiments | Traffic and METAR features per 15-min period (main dataset) |
 | `new_taf_list.csv` | `R_Codes/taf_decoder.R` | all Python experiments | Decoded TAF forecasts per 15-min period, including probabilistic (PROB/TEMPO) groups |
 | `std_taf.csv` | `R_Codes/taf_decoder.R` | all Python experiments | "Standard" deterministic TAF scenario: rows of probabilistic groups replaced by the main forecast |
-| `data_gru.Rda` | `R_Codes/generate_sbgr_data.R` | `R_Codes/capacity_management.R` | R version of the main dataset, input of the RCCE estimation |
+| `data_gru.Rda` | Archived processed study artifact; preprocessing methodology in `R_Codes/generate_sbgr_data.R` | `R_Codes/capacity_management.R` | R version of the main dataset, input of the RCCE estimation |
 | `raw-data/taf.csv` | REDEMET (DECEA) | `R_Codes/taf_decoder.R` | Raw TAF messages for SBGR |
 | `raw-data/metar_sbgr_2019_2023.Rda` | Iowa Environmental Mesonet | `R_Codes/generate_sbgr_data.R` | Decoded METARs for SBGR |
 
@@ -92,6 +107,8 @@ experiment and the RCCE estimation.
 ## Integrity
 
 CI checks that `data.csv` contains 66,816 rows corresponding to 696 operational
-days with 96 periods per day, and verifies the exact committed bytes of the
-principal data artifacts using their Git blob IDs. See
+days with 96 periods per day; confirms the archived April 24–28 inclusion while
+also checking that the current preprocessing script contains the documented
+exclusion statements; and verifies the exact committed bytes of the principal data
+artifacts using their Git blob IDs. See
 [`../tests/test_repository_integrity.py`](../tests/test_repository_integrity.py).
