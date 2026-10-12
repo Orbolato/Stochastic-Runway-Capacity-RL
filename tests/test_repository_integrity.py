@@ -91,10 +91,15 @@ class RepositoryIntegrityTests(unittest.TestCase):
         _, day_counts = load_processed_day_counts()
         self.assertEqual(set(day_counts.values()), {96})
 
-    def test_processed_dataset_april_exclusions(self):
+    def test_archived_processed_dataset_contains_april_24_to_28(self):
         _, day_counts = load_processed_day_counts()
         for d in range(24, 29):
-            self.assertNotIn((2023, 4, d), day_counts)
+            self.assertIn((2023, 4, d), day_counts)
+
+    def test_current_preprocessing_script_contains_april_exclusion(self):
+        text = (ROOT / "R_Codes" / "generate_sbgr_data.R").read_text(encoding="utf-8")
+        for d in range(24, 29):
+            self.assertIn(f'2023-04-{d:02d}', text)
 
     def test_archived_result_tables(self):
         with (ROOT / "results" / "returns_209_test_days.csv").open(
@@ -108,7 +113,6 @@ class RepositoryIntegrityTests(unittest.TestCase):
 
         self.assertEqual(len(rows_209), 209)
         self.assertEqual(len(rows_7), 7)
-        # This historical archived row is intentionally preserved; see PROVENANCE.md.
         self.assertIn((2023, 4, 28), {normalize_day(r["day"]) for r in rows_209})
 
     def test_trained_model_archives_are_valid_zip_files(self):
