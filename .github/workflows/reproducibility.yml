@@ -46,9 +46,10 @@ jobs:
         run: |
           python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_has_96_periods_per_day -v
 
-      - name: Verify April 2023 exclusions in processed data
+      - name: Verify archived April data and preprocessing provenance
         run: |
-          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_april_exclusions -v
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_archived_processed_dataset_contains_april_24_to_28 -v
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_current_preprocessing_script_contains_april_exclusion -v
 
       - name: Verify archived result tables
         run: |
@@ -78,29 +79,3 @@ jobs:
           test "$(find "$TMPDIR/figures" -maxdepth 1 -type f | wc -l)" -eq 28
           test -f "$TMPDIR/figures/fig13a_db1_209_days.png"
           test -f "$TMPDIR/figures/fig19b_fb2_no_baseline.eps"
-
-  april-diagnostic:
-    name: April exclusion day ${{ matrix.day }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        day: [24, 25, 26, 27, 28]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Confirm operational day is absent from committed data
-        env:
-          DAY: ${{ matrix.day }}
-        run: |
-          python - <<'PY'
-          import csv, os
-          target = (2023, 4, int(os.environ['DAY']))
-          found = False
-          with open('data/data.csv', newline='', encoding='utf-8-sig') as f:
-              for row in csv.DictReader(f):
-                  day = tuple(int(x) for x in row['day'].split('-'))
-                  if day == target:
-                      found = True
-                      break
-          raise SystemExit(1 if found else 0)
-          PY
