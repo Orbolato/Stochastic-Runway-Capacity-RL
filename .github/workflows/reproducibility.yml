@@ -30,9 +30,29 @@ jobs:
         run: |
           python -m compileall -q dqn ppo_data_based ppo_forecast_based results tests
 
-      - name: Run repository integrity tests
+      - name: Verify immutable artifact bytes
         run: |
-          python -m unittest discover -s tests -p 'test_*.py' -v
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_immutable_artifact_blob_ids -v
+
+      - name: Verify processed dataset shape and excluded operational days
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_shape_and_operational_days -v
+
+      - name: Verify archived result tables
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_archived_result_tables -v
+
+      - name: Verify retained PPO archives
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_trained_model_archives_are_valid_zip_files -v
+
+      - name: Verify restricted source records are absent
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_restricted_source_records_are_not_committed -v
+
+      - name: Verify citation metadata
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_citation_metadata_points_to_article_and_repository -v
 
       - name: Regenerate published result figures from archived returns
         env:
@@ -46,7 +66,3 @@ jobs:
           test "$(find "$TMPDIR/figures" -maxdepth 1 -type f | wc -l)" -eq 28
           test -f "$TMPDIR/figures/fig13a_db1_209_days.png"
           test -f "$TMPDIR/figures/fig19b_fb2_no_baseline.eps"
-
-      - name: Confirm public package excludes restricted traffic source records
-        run: |
-          test ! -e data/raw-data/traffic-data
