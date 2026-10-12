@@ -28,22 +28,33 @@ The following source records used by `R_Codes/generate_sbgr_data.R` are intentio
 - Flightradar24-based arrival and departure trajectory extracts;
 - DECEA TATIC departure milestone records.
 
-The exclusion is deliberate and is enforced by `.gitignore`, repository integrity tests, and CI. The public processed datasets are sufficient to run the Python experiments and to recompute the RCCEs without reconstructing these source records.
+The exclusion is deliberate and is enforced by `.gitignore`, repository integrity tests, and CI. The archived processed datasets are sufficient to run the Python experiments and to recompute the RCCEs without reconstructing these source records.
+
+## Reproducibility boundary
+
+The repository distinguishes three levels of reproducibility:
+
+1. **Artifact reproduction** — regenerating Figs. 13–19 from the committed per-day return tables.
+2. **Experiment rerunning** — retraining/reoptimizing PPO, DQN, and GA from the committed processed inputs. Because no random seeds were fixed in the original RL or GA experiments, numerical returns are expected to vary.
+3. **Raw-to-processed reconstruction** — rerunning the R source-data pipeline from the excluded traffic records. The current public R script is preserved as historical methodology, but it is **not** asserted to recreate the exact committed processed dataset byte-for-byte; see the April 2023 note below.
+
+The retained PPO archives allow the study PPO policies to be evaluated without retraining. DQN model weights were not retained; the DQN contribution is preserved through its source code and archived per-day result tables.
+
+## April 2023 preprocessing provenance note
+
+An audit of the public package found a real historical mismatch that is now documented rather than silently “fixed”:
+
+- the committed archived processed dataset `data/data.csv` contains all five operational days **24–28 April 2023**, each with 96 periods;
+- `R_Codes/generate_sbgr_data.R`, in its current committed form, explicitly excludes operational days **24–28 April 2023**;
+- the archived 209-day result table contains a row labeled `2023-04-28`.
+
+The repository history does not contain an immutable run manifest or earlier preprocessing snapshot that establishes when or why the five-day exclusion was introduced relative to the archived processed dataset and experiment outputs. Therefore, this package does **not** claim that the current `generate_sbgr_data.R` reproduces the exact committed `data.csv` or the identical historical train/test sample from raw source records.
+
+The study artifacts themselves are preserved unchanged. CI explicitly verifies the archived data shape and April 24–28 inclusion, the current R-script exclusion statements, and the April 28 result-table row so that future edits cannot silently erase this provenance distinction.
 
 ## Historical results and stochastic retraining
 
-The committed files in `results/` are archived outputs from the study. No random seeds were fixed in the original RL or GA experiments. Consequently, retraining PPO or DQN, or rerunning the GA, is **not expected to reproduce the archived numerical returns exactly**. The repository therefore distinguishes:
-
-1. **artifact reproduction** — regenerating Figs. 13–19 from the committed per-day return tables; and
-2. **experiment rerunning** — retraining/reoptimizing from the processed data, where numerical variation is expected.
-
-The retained PPO archives allow the original PPO policies to be evaluated without retraining. DQN model weights were not retained; the DQN contribution is preserved through its source code and archived per-day result tables.
-
-## April 2023 historical-output note
-
-`R_Codes/generate_sbgr_data.R` excludes operational days 24–28 April 2023 in the current public preprocessing path. The archived 209-day result table, however, contains a row labeled `2023-04-28`. Both facts are preserved intentionally: the result table is an historical study artifact and has not been edited to force agreement with the current cleaned preprocessing script.
-
-The available repository history does not contain an immutable run manifest that establishes why this historical row differs from the current preprocessing exclusion. It would therefore be inappropriate to invent a reconciliation. CI explicitly verifies both conditions so that future edits cannot silently erase the discrepancy. This note should be read as provenance documentation, not as a claim that the current preprocessing script recreates the identical historical train/test sample.
+The committed files in `results/` are archived outputs from the study. No random seeds were fixed in the original RL or GA experiments. Consequently, retraining PPO or DQN, or rerunning the GA, is **not expected to reproduce the archived numerical returns exactly**. The retained result tables are therefore provenance artifacts, while the experiment code provides a rerunnable implementation of the methodology.
 
 ## Integrity anchors
 
@@ -70,7 +81,8 @@ GitHub Actions performs a lightweight verification suitable for every push and p
 - compiles all Python source files;
 - validates the exact bytes of the committed data/result/model anchors;
 - checks the processed dataset shape (66,816 periods, 696 operational days, 96 periods per day);
-- checks the archived result-table row counts (209 and 7 days);
+- verifies the archived April 24–28 data inclusion and the current preprocessing-script exclusion statements;
+- checks the archived result-table row counts (209 and 7 days) and preserves the April 28 result row;
 - confirms that restricted source traffic records are absent;
 - validates the CFF citation metadata;
 - regenerates all 28 PNG/EPS files corresponding to Figs. 13–19 from the archived reward tables.
