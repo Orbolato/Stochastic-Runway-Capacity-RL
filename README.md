@@ -22,24 +22,25 @@ A genetic algorithm (GA) with full knowledge of each day provides an upper bench
 
 ## Reproducibility scope
 
-This repository supports two distinct reproducibility levels:
+This repository distinguishes three reproducibility levels:
 
 1. **Artifact reproduction.** The committed per-day return tables regenerate Figs. 13–19 without retraining. CI checks this path on every push and pull request.
-2. **Experiment rerunning.** The PPO, DQN, GA, R preprocessing, and RCCE-estimation code are provided so the experiments can be rerun from the committed processed data. The original RL and GA experiments did **not** use fixed random seeds, so rerunning is not expected to reproduce the archived numerical returns exactly.
+2. **Experiment rerunning.** The PPO, DQN, and GA code can be rerun from the committed processed inputs. The original RL and GA experiments did **not** use fixed random seeds, so rerunning is not expected to reproduce the archived numerical returns exactly.
+3. **Raw-to-processed reconstruction.** The R preprocessing and RCCE-estimation code are preserved as historical methodology. The current `R_Codes/generate_sbgr_data.R` is **not** asserted to recreate the committed processed dataset byte-for-byte: the archived `data/data.csv` contains operational days 2023-04-24 through 2023-04-28, while the current R script explicitly excludes those five days. The repository history does not establish when that exclusion was introduced relative to the archived study inputs.
 
-The processed/aggregated datasets committed under `data/` are intentionally released publicly by the corresponding author as research artifacts for this paper. The underlying source traffic records listed in `data/README.md` remain excluded. See [`PROVENANCE.md`](PROVENANCE.md) for the precise release boundary, immutable artifact identifiers, and the historical-output note.
+Accordingly, `data/data.csv` and `data/data_gru.Rda` should be treated as the authoritative archived processed inputs for experiment rerunning. The processed/aggregated datasets committed under `data/` are intentionally released publicly by the corresponding author as research artifacts for this paper. The underlying source traffic records listed in `data/README.md` remain excluded. See [`PROVENANCE.md`](PROVENANCE.md) for the precise release boundary, immutable artifact identifiers, and historical preprocessing note.
 
 ## Repository structure
 
 ```
 ├── .github/workflows/         Automated integrity and artifact-regeneration CI
-├── R_Codes/                   Data preprocessing (R)
+├── R_Codes/                   Historical data-preprocessing and RCCE-estimation code (R)
 │   ├── taf_decoder.R              Decodes raw TAFs into 15-min forecasts
 │   ├── forecast_data_decoder_mod.R METAR/TAF decoding functions
-│   ├── generate_sbgr_data.R       Builds the SBGR traffic/METAR dataset (needs excluded source traffic data)
+│   ├── generate_sbgr_data.R       Historical SBGR traffic/METAR preprocessing (needs excluded source traffic data)
 │   └── capacity_management.R      RCCE quantile regression (AMPL) and export of data.csv
 ├── optimization-models/       AMPL models for the quantile regression (Eqs. 1-2)
-├── data/                      Public processed datasets and weather/TAF inputs
+├── data/                      Public archived processed datasets and weather/TAF inputs
 ├── curves/                    RCCEs per weather condition, runway configuration, and percentile
 ├── ppo_data_based/            Maskable PPO, DB Approaches 1 and 2, greedy policy, and GA benchmark
 ├── ppo_forecast_based/        Maskable PPO, FB Approaches 1 and 2
@@ -79,17 +80,17 @@ conda activate rl-runway
 pip install -r requirements.txt
 ```
 
-The R preprocessing uses R 4.4 with `plyr`, `dplyr`, `ggplot2`, `nloptr`, `lubridate`, and `RCurl`. The RCCE estimation also needs [AMPL](https://ampl.com) with the `rAMPL` package and a Gurobi license. Set `ampl_dir` at the top of `R_Codes/capacity_management.R` to your AMPL installation before running that optional stage.
+The R preprocessing uses R 4.4 with `plyr`, `dplyr`, `ggplot2`, `nloptr`, `lubridate`, and `RCurl`. The RCCE estimation also needs [AMPL](https://ampl.com) with the `rAMPL` package and a Gurobi license. Set `ampl_dir` at the top of `R_Codes/capacity_management.R` to your AMPL installation before running that optional historical preprocessing stage.
 
 For the lightweight repository checks and result-figure regeneration only, CI uses the smaller `requirements-ci.txt` environment.
 
 ## Usage
 
-The processed data and RCCEs are already in `data/` and `curves/`, so the R preprocessing step is optional for experiment rerunning.
+The archived processed data and RCCEs are already in `data/` and `curves/`; these are the intended inputs for rerunning the Python experiments.
 
-### 1. Preprocessing (R, optional)
+### 1. Raw-to-processed preprocessing (R, historical/optional)
 
-Run from the repository root, in this order:
+The source code for the preprocessing pipeline is preserved for methodology transparency. Run from the repository root, in this order:
 
 ```bash
 Rscript R_Codes/taf_decoder.R            # data/new_taf_list.csv, data/std_taf.csv, data/taf_workspace.RData
@@ -97,7 +98,9 @@ Rscript R_Codes/generate_sbgr_data.R     # data/data_gru.Rda (requires excluded 
 Rscript R_Codes/capacity_management.R    # data/data.csv and curves/*.csv
 ```
 
-`capacity_management.R` can be run on its own from the included `data/data_gru.Rda`. The Python scripts use the curves with p = 0.99 (VMC), 0.95 (IMC), and 0.90 (LIMC).
+**Important:** do not treat the current `generate_sbgr_data.R` as an exact reconstruction recipe for the committed `data.csv`/`data_gru.Rda`. The archived processed dataset contains operational days 24–28 April 2023, whereas the current script excludes them. This discrepancy is preserved and documented rather than silently changing historical data or code. See [`PROVENANCE.md`](PROVENANCE.md).
+
+`capacity_management.R` can be run on its own from the included archived `data/data_gru.Rda` to recompute RCCEs. The Python scripts use the curves with p = 0.99 (VMC), 0.95 (IMC), and 0.90 (LIMC).
 
 ### 2. Experiments (Python)
 
@@ -156,7 +159,7 @@ No random seeds were fixed in the original experiments, so retraining the agents
 
 ## Quick repository verification
 
-The verification path does **not** retrain the agents. It checks artifact integrity, dataset/result schemas, CFF metadata, and the public-package boundary:
+The verification path does **not** retrain the agents. It checks artifact integrity, the archived processed-data shape, the documented April preprocessing distinction, result tables, retained model archives, CFF metadata, and the public-package boundary:
 
 ```bash
 pip install -r requirements-ci.txt
