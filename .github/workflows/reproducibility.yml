@@ -34,9 +34,21 @@ jobs:
         run: |
           python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_immutable_artifact_blob_ids -v
 
-      - name: Verify processed dataset shape and excluded operational days
+      - name: Verify processed dataset row count
         run: |
-          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_shape_and_operational_days -v
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_total_rows -v
+
+      - name: Verify processed operational-day count
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_operational_day_count -v
+
+      - name: Verify 96 periods per processed operational day
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_has_96_periods_per_day -v
+
+      - name: Verify April 2023 exclusions in processed data
+        run: |
+          python -m unittest tests.test_repository_integrity.RepositoryIntegrityTests.test_processed_dataset_april_exclusions -v
 
       - name: Verify archived result tables
         run: |
