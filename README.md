@@ -157,6 +157,15 @@ DQN obtains exactly the same archived returns on the 7 test days with DB Approac
 
 No random seeds were fixed in the original experiments, so retraining the agents or rerunning the GA is expected to give returns that differ from the archived values. See [`results/README.md`](results/README.md) and [`PROVENANCE.md`](PROVENANCE.md).
 
+## Additional experiments in the PhD thesis
+
+Two additional experiments with this code are reported in the author's PhD thesis (Subsections 4.2.2 and 4.2.3). They do not change the results of the paper and are documented here for completeness; their outputs are not part of this repository.
+
+- **Random seeds (DB Approach 1, Maskable PPO).** The model was retrained 10 times with random seeds 0 to 9 and evaluated on the 209 test days. Seven runs reached a mean total reward of −59.53 ± 1.51 per day (range −61.95 to −57.66), and the retained policy (−60.18) lies within this range. The other three runs failed to learn, which was visible in their training curves before any evaluation.
+- **Bayes rule for the weather scenarios (FB Approach 2).** The scenario generator draws the weather condition and the wind state from the product of the transition and confusion probabilities, $q(S_t) \propto P(S_t \mid S_{t-1})\,P(S_t \mid \hat S_t)$. Bayes' rule, $q(S_t) \propto P(S_t \mid S_{t-1})\,P(S_t \mid \hat S_t)\,/\,P(S_t)$, was tested as an alternative. It gives a share of adverse weather in the scenarios closer to the METARs, but Maskable PPO retrained with it on the 7 test days did not perform better: the mean total reward was −64.41 against −46.80, and the policies took the same decisions in 659 of the 672 test intervals.
+
+> Carvalho, L.O. (2026). *A reinforcement learning approach for air traffic flow and capacity management under uncertainty.* PhD thesis, Aeronautics Institute of Technology (ITA), São José dos Campos, Brazil.
+
 ## Quick repository verification
 
 The verification path does **not** retrain the agents. It checks artifact integrity, the archived processed-data shape, the documented April preprocessing distinction, result tables, retained model archives, CFF metadata, and the public-package boundary:
