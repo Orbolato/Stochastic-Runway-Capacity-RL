@@ -13,6 +13,14 @@ import scipy.stats as stats
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
+# Exponent of the prior in the weather scenario rule of FB Approach 2: 0 is the published rule (product of the
+# confusion and transition probabilities), 1 is Bayes' rule. See the README, "Note on the weather scenario sampling rule".
+ZETA = 0.0
+# Folder of the FB Approach 2 outputs; a run with another ZETA writes to its own folder
+FB2_DIR = 'Results - FB Approach 2' + ('' if ZETA == 0 else f' (zeta {ZETA:g})')
+if ZETA != 0:
+    os.makedirs(FB2_DIR, exist_ok=True)
+
 ###############################################################################
 # Function for day counter
 ###############################################################################
@@ -563,6 +571,9 @@ for i in range(p_ws_trans.shape[0]):
 for i in range(taf_data.shape[0]):
     p_wc_error[taf_data.loc[i,'weather_condition'], data.loc[i,'weather_condition']] += 1
     p_ws_error[taf_data.loc[i,'wind_state'], data.loc[i,'wind_state']] += 1
+# Prior of the weather scenario rule: share of each state in the METARs of these rows (used only if ZETA != 0)
+p_wc_prior = p_wc_error.sum(axis=0) / p_wc_error.sum()
+p_ws_prior = p_ws_error.sum(axis=0) / p_ws_error.sum()
 for i in range(p_wc_error.shape[0]):
     p_wc_error[i] = p_wc_error[i] / np.sum(p_wc_error[i])
 for i in range(p_ws_error.shape[0]):
@@ -1038,7 +1049,8 @@ for day in test_days_2:
                        arr_mean=arr_mean, arr_std=arr_std, 
                        dep_mean=dep_mean, dep_std=dep_std, chosen_day=day,
                        p_wc_trans=p_wc_trans, p_ws_trans=p_ws_trans,
-                       p_wc_error=p_wc_error, p_ws_error=p_ws_error)
+                       p_wc_error=p_wc_error, p_ws_error=p_ws_error,
+                       zeta=ZETA, p_wc_prior=p_wc_prior, p_ws_prior=p_ws_prior)
     # del model
     model = MaskablePPO("MlpPolicy", env_specific, gamma=1, verbose=1)
     # prev_model = MaskablePPO.load(join(wd, 'trained_models', 'ppo', 'fb_approach_2', 'ppo_model_fb_2_' + day), 
@@ -1048,7 +1060,7 @@ for day in test_days_2:
     end = time.time()
     print('Finished in ' + str(round(end-start, 2)) + ' seconds.')
     
-    model.save("Results - FB Approach 2/ppo_model_fb_2_" + day) # Save model
+    model.save(FB2_DIR + "/ppo_model_fb_2_" + day) # Save model
     
     # Compute single action using the model
     obs, info = env_specific.reset(training=False)
@@ -1107,7 +1119,7 @@ for day in test_days_2:
     plt.xlabel('Time steps')
     plt.ylabel('Arrivals')
     plt.legend(['PPO RC','PPO','Baseline RC','Baseline'])
-    plt.savefig('Results - FB Approach 2/ppo_fb_2_policy_' + day + '.eps', format='eps')
+    plt.savefig(FB2_DIR + '/ppo_fb_2_policy_' + day + '.eps', format='eps')
     plt.show()
 
 # Plotting results
@@ -1121,7 +1133,7 @@ plt.legend(['Greedy','PPO','Baseline'])
 plt.xlabel('Test Days')
 plt.ylabel('Total return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/ppo_fb_2_results.eps', format='eps')
+plt.savefig(FB2_DIR + '/ppo_fb_2_results.eps', format='eps')
 plt.show()
 
 # Function to add value labels
@@ -1138,5 +1150,5 @@ addlabels(x,y)
 # plt.xticks(rotation=45)
 plt.ylabel('Mean return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/ppo_fb_2_mean.eps', format='eps')
+plt.savefig(FB2_DIR + '/ppo_fb_2_mean.eps', format='eps')
 plt.show()
