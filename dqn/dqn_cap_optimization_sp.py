@@ -17,6 +17,10 @@ import math
 # Exponent of the prior in the weather scenario rule of FB Approach 2: 0 is the published rule (product of the
 # confusion and transition probabilities), 1 is Bayes' rule. See the README, "Note on the weather scenario sampling rule".
 ZETA = 0.0
+# Folder of the FB Approach 2 outputs; a run with another ZETA writes to its own folder
+FB2_DIR = 'Results - FB Approach 2' + ('' if ZETA == 0 else f' (zeta {ZETA:g})')
+if ZETA != 0:
+    os.makedirs(FB2_DIR, exist_ok=True)
 
 ###############################################################################
 # Function for day counter
@@ -1255,7 +1259,7 @@ for day in test_days_2:
     plt.xlabel('Steps')
     plt.ylabel('Return')
     plt.title('Forecast-Based Approach 2')
-    plt.savefig('Results - FB Approach 2/dqn_fb_2_training_' + day + '.eps', format='eps')
+    plt.savefig(FB2_DIR + '/dqn_fb_2_training_' + day + '.eps', format='eps')
     plt.show()
 
     plt.figure(dpi=1200)
@@ -1263,7 +1267,7 @@ for day in test_days_2:
     plt.xlabel('Steps')
     plt.ylabel('Epsilon')
     plt.title('Forecast-Based Approach 2')
-    plt.savefig('Results - FB Approach 2/dqn_fb_2_epsilon_' + day + '.eps', format='eps')
+    plt.savefig(FB2_DIR + '/dqn_fb_2_epsilon_' + day + '.eps', format='eps')
     plt.show()
 
     plt.figure(dpi=1200)
@@ -1271,7 +1275,7 @@ for day in test_days_2:
     plt.xlabel('Steps')
     plt.ylabel('Return')
     plt.title('Forecast-Based Approach 2')
-    plt.savefig('Results - FB Approach 2/dqn_fb_2_learning_' + day + '.eps', format='eps')
+    plt.savefig(FB2_DIR + '/dqn_fb_2_learning_' + day + '.eps', format='eps')
     plt.show()
 
     print('Done.\n')
@@ -1293,7 +1297,7 @@ plt.plot(base_list,'b')
 plt.xlabel('Days')
 plt.ylabel('Return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/dqn_fb_2_results.eps', format='eps')
+plt.savefig(FB2_DIR + '/dqn_fb_2_results.eps', format='eps')
 plt.show()
 
 # Function to add value labels
@@ -1310,7 +1314,7 @@ addlabels(x,y)
 # plt.xticks(rotation=45)
 plt.ylabel('Mean return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/ppo_fb_2_mean.eps', format='eps')
+plt.savefig(FB2_DIR + '/ppo_fb_2_mean.eps', format='eps')
 plt.show()
 
 print('Done.\n')

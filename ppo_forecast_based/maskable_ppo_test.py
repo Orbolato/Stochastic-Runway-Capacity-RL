@@ -16,6 +16,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 # Exponent of the prior in the weather scenario rule of FB Approach 2: 0 is the published rule (product of the
 # confusion and transition probabilities), 1 is Bayes' rule. See the README, "Note on the weather scenario sampling rule".
 ZETA = 0.0
+# Folder of the FB Approach 2 outputs; a run with another ZETA writes to its own folder
+FB2_DIR = 'Results - FB Approach 2' + ('' if ZETA == 0 else f' (zeta {ZETA:g})')
+if ZETA != 0:
+    os.makedirs(FB2_DIR, exist_ok=True)
 
 ###############################################################################
 # Function for day counter
@@ -1056,7 +1060,7 @@ for day in test_days_2:
     end = time.time()
     print('Finished in ' + str(round(end-start, 2)) + ' seconds.')
     
-    model.save("Results - FB Approach 2/ppo_model_fb_2_" + day) # Save model
+    model.save(FB2_DIR + "/ppo_model_fb_2_" + day) # Save model
     
     # Compute single action using the model
     obs, info = env_specific.reset(training=False)
@@ -1115,7 +1119,7 @@ for day in test_days_2:
     plt.xlabel('Time steps')
     plt.ylabel('Arrivals')
     plt.legend(['PPO RC','PPO','Baseline RC','Baseline'])
-    plt.savefig('Results - FB Approach 2/ppo_fb_2_policy_' + day + '.eps', format='eps')
+    plt.savefig(FB2_DIR + '/ppo_fb_2_policy_' + day + '.eps', format='eps')
     plt.show()
 
 # Plotting results
@@ -1129,7 +1133,7 @@ plt.legend(['Greedy','PPO','Baseline'])
 plt.xlabel('Test Days')
 plt.ylabel('Total return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/ppo_fb_2_results.eps', format='eps')
+plt.savefig(FB2_DIR + '/ppo_fb_2_results.eps', format='eps')
 plt.show()
 
 # Function to add value labels
@@ -1146,5 +1150,5 @@ addlabels(x,y)
 # plt.xticks(rotation=45)
 plt.ylabel('Mean return')
 plt.title('Forecast-Based Approach 2')
-plt.savefig('Results - FB Approach 2/ppo_fb_2_mean.eps', format='eps')
+plt.savefig(FB2_DIR + '/ppo_fb_2_mean.eps', format='eps')
 plt.show()
