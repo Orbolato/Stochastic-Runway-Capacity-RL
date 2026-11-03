@@ -13,6 +13,10 @@ import scipy.stats as stats
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
+# Exponent of the prior in the weather scenario rule of FB Approach 2: 0 is the published rule (product of the
+# confusion and transition probabilities), 1 is Bayes' rule. See the README, "Note on the weather scenario sampling rule".
+ZETA = 0.0
+
 ###############################################################################
 # Function for day counter
 ###############################################################################
@@ -563,6 +567,9 @@ for i in range(p_ws_trans.shape[0]):
 for i in range(taf_data.shape[0]):
     p_wc_error[taf_data.loc[i,'weather_condition'], data.loc[i,'weather_condition']] += 1
     p_ws_error[taf_data.loc[i,'wind_state'], data.loc[i,'wind_state']] += 1
+# Prior of the weather scenario rule: share of each state in the METARs of these rows (used only if ZETA != 0)
+p_wc_prior = p_wc_error.sum(axis=0) / p_wc_error.sum()
+p_ws_prior = p_ws_error.sum(axis=0) / p_ws_error.sum()
 for i in range(p_wc_error.shape[0]):
     p_wc_error[i] = p_wc_error[i] / np.sum(p_wc_error[i])
 for i in range(p_ws_error.shape[0]):
@@ -1038,7 +1045,8 @@ for day in test_days_2:
                        arr_mean=arr_mean, arr_std=arr_std, 
                        dep_mean=dep_mean, dep_std=dep_std, chosen_day=day,
                        p_wc_trans=p_wc_trans, p_ws_trans=p_ws_trans,
-                       p_wc_error=p_wc_error, p_ws_error=p_ws_error)
+                       p_wc_error=p_wc_error, p_ws_error=p_ws_error,
+                       zeta=ZETA, p_wc_prior=p_wc_prior, p_ws_prior=p_ws_prior)
     # del model
     model = MaskablePPO("MlpPolicy", env_specific, gamma=1, verbose=1)
     # prev_model = MaskablePPO.load(join(wd, 'trained_models', 'ppo', 'fb_approach_2', 'ppo_model_fb_2_' + day), 

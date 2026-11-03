@@ -14,6 +14,10 @@ import os
 import scipy.stats as stats
 import math
 
+# Exponent of the prior in the weather scenario rule of FB Approach 2: 0 is the published rule (product of the
+# confusion and transition probabilities), 1 is Bayes' rule. See the README, "Note on the weather scenario sampling rule".
+ZETA = 0.0
+
 ###############################################################################
 # Function for day counter
 ###############################################################################
@@ -564,6 +568,9 @@ for i in range(p_ws_trans.shape[0]):
 for i in range(taf_data.shape[0]):
     p_wc_error[taf_data.loc[i,'weather_condition'], data.loc[i,'weather_condition']] += 1
     p_ws_error[taf_data.loc[i,'wind_state'], data.loc[i,'wind_state']] += 1
+# Prior of the weather scenario rule: share of each state in the METARs of these rows (used only if ZETA != 0)
+p_wc_prior = p_wc_error.sum(axis=0) / p_wc_error.sum()
+p_ws_prior = p_ws_error.sum(axis=0) / p_ws_error.sum()
 for i in range(p_wc_error.shape[0]):
     p_wc_error[i] = p_wc_error[i] / np.sum(p_wc_error[i])
 for i in range(p_ws_error.shape[0]):
@@ -1028,7 +1035,8 @@ for day in test_days_2:
                                dep_mean = dep_mean, dep_std = dep_std,
                                p_wc_trans = p_wc_trans, p_ws_trans = p_ws_trans,
                                p_wc_error = p_wc_error, p_ws_error = p_ws_error,
-                               chosen_day=day)
+                               chosen_day=day,
+                               zeta = ZETA, p_wc_prior = p_wc_prior, p_ws_prior = p_ws_prior)
 
     # Creating Deep Agent
     agent = dqn.DQNAgent(layer_sizes = neurons,
