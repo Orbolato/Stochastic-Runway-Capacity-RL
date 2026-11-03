@@ -59,7 +59,7 @@ Accordingly, `data/data.csv` and `data/data_gru.Rda` should be treated as the au
 | RCCE estimation by quantile regression (Section 3.1, Eqs. 1-2, Fig. 12) | `R_Codes/capacity_management.R`, `optimization-models/linear_quantreg.mod`; Fig. 12 is plotted by `ppo_data_based/maskable_ppo_test.py` (`rcces_gru.eps`) |
 | MDP: states, actions, reward (Section 3.2, Eqs. 7-13) | `ppo_data_based/improved_gym_capoptimizer.py` (PPO, DB), `ppo_forecast_based/improved_gym_capoptimizer_specific_std.py` (PPO, FB 1), `ppo_forecast_based/improved_gym_capoptimizer_specific.py` (PPO, FB 2), `dqn/improved_runway_env.py` (DQN, DB), `dqn/improved_runway_env_sp.py` (DQN, FB 2) |
 | DQN with state and action as inputs (Fig. 3) | `dqn/improved_dqn_agent.py` (DB), `dqn/dqn_agent.py` (FB 2) |
-| Stochastic scenario generation (Section 3.3, Eqs. 14-15) | `ppo_forecast_based/improved_gym_capoptimizer_specific.py`, `dqn/improved_runway_env_sp.py` |
+| Stochastic scenario generation (Section 3.3, Eqs. 14-15) | `ppo_forecast_based/improved_gym_capoptimizer_specific.py`, `dqn/improved_runway_env_sp.py`; see the [note on the sampling rule](#note-on-the-weather-scenario-sampling-rule) |
 | Error distributions of scheduled demand (Figs. 8-9) | `ppo_data_based/maskable_ppo_test.py` (`arr_dist.eps`, `dep_dist.eps`, `arr_variation.eps`, `dep_variation.eps`) |
 | Confusion and transition matrices (Figs. 10-11) | `ppo_forecast_based/maskable_ppo_test.py` (`wc_error.eps`, `ws_error.eps`, `wc_trans.eps`, `ws_trans.eps`) |
 | PPO, DB Approaches 1 and 2 | `ppo_data_based/maskable_ppo_test.py` |
@@ -69,6 +69,37 @@ Accordingly, `data/data.csv` and `data/data_gru.Rda` should be treated as the au
 | Baseline policy | `base_action()` / `base_step()` in the environment classes |
 | GA benchmark | `ppo_data_based/runway_optimization_ga.py` (DEAP), run by `ppo_data_based/calculations.py` |
 | Results (Figs. 13-19) | `results/returns_*.csv`, `results/make_result_figures.py` |
+
+## Note on the weather scenario sampling rule
+
+FB Approach 2 draws the weather condition and the wind state of each 15-min interval from the normalized element-wise product of two rows: the confusion probabilities of the TAF forecast and the transition probabilities from the previous state (Section 3.3, Eqs. 14-15; `_generate_next_state()` in `ppo_forecast_based/improved_gym_capoptimizer_specific.py` and `dqn/improved_runway_env_sp.py`):
+
+```
+q(Y_t) ∝ P(Y_t | Y_{t-1}) · P(Y_t | Y'_t)
+```
+
+where `Y_t` is the weather condition or the wind state, `Y_{t-1}` the previous state, and `Y'_t` the TAF forecast.
+
+**Interpretation.** If the forecast and the previous state are conditionally independent given the current state, Bayes' rule divides this product by the prior `P(Y_t)`, the share of each state in the METARs used for the confusion matrices. That is the product rule for combining the posteriors of two sources (Kittler et al., 1998) and the naive Bayes posterior given the previous state and the forecast. The implemented rule omits the division, so it coincides with naive Bayes only if all states are equally likely a priori; otherwise it is naive Bayes with an effective prior proportional to `P(Y_t)²`, which weights the observed shares twice. Both rules belong to the family
+
+```
+q(Y_t) ∝ P(Y_t | Y_{t-1}) · P(Y_t | Y'_t) / P(Y_t)^ζ,   0 ≤ ζ ≤ 1
+```
+
+with ζ = 0 implemented here and ζ = 1 for Bayes' rule. Hybrid HMM/neural-network speech recognition faces the same choice: the network posteriors are divided by the state priors (Bourlard and Morgan, 1994), but later systems also scale or omit the prior (Kanda et al., 2016; Zeyer et al., 2017). The value of ζ is therefore a modeling choice whose effect has to be assessed empirically.
+
+**Effect on the scenarios.** With ζ = 0 the scenarios favor the most frequent states. Over the 696 days, with 10 scenarios per day, 1.5% of the intervals lie outside VMC and 4.4% have a wind state that restricts the runway configurations, against 15.3% and 27.5% in the METARs of the same days; with ζ = 1 these shares are 16.4% and 27.5%. The scenarios are meant as plausible training sequences for model-free RL, not as an exact model of the weather.
+
+**Effect on the policies.** Maskable PPO was retrained once per test day for FB Approach 2 with ζ = 1, all else unchanged (Carvalho, 2026, PhD thesis; these runs are not part of the paper). The mean total reward was −64.41, against −46.80 with ζ = 0. The two policies take the same decision in 659 of the 672 intervals, and the difference comes from two days (2022-08-17 and 2023-08-05) on which the ζ = 1 training run did not reach a policy as good as one that exists for its own scenarios. On these 7 test days the results do not favor ζ = 1 over ζ = 0; they rest on one training run per rule and day. The code and archived results in this repository are unchanged and use ζ = 0.
+
+To try another ζ, divide the product by `prior ** zeta` before normalizing, where `prior` is the share of each state among the METAR rows used to build `p_wc_error` and `p_ws_error`.
+
+References:
+
+- Bourlard, H., Morgan, N., 1994. *Connectionist Speech Recognition: A Hybrid Approach*. Kluwer. https://doi.org/10.1007/978-1-4615-3210-1
+- Kanda, N., Lu, X., Kawai, H., 2016. Maximum a posteriori based decoding for CTC acoustic models. *Interspeech 2016*, 1868-1872. https://doi.org/10.21437/Interspeech.2016-71
+- Kittler, J., Hatef, M., Duin, R.P.W., Matas, J., 1998. On combining classifiers. *IEEE Transactions on Pattern Analysis and Machine Intelligence* 20(3), 226-239. https://doi.org/10.1109/34.667881
+- Zeyer, A., Beck, E., Schlüter, R., Ney, H., 2017. CTC in the context of generalized full-sum HMM training. *Interspeech 2017*, 944-948. https://doi.org/10.21437/Interspeech.2017-1073
 
 ## Installation
 
